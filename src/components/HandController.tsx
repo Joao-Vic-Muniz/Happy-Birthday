@@ -1,20 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Hands } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
 
 export default function HandController() {
   const videoRef = useRef<HTMLVideoElement>(null);
-
   const lastY = useRef<number | null>(null);
-  const position = useRef(0);
-  const maxScroll = useRef(0);
+  const cameraRef = useRef<Camera | null>(null);
+  const handsRef = useRef<Hands | null>(null);
+
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
-    const scrollElement = document.getElementById("scroll-content");
-
-    if (scrollElement) {
-      maxScroll.current =
-        scrollElement.scrollHeight - window.innerHeight;
+    if (!active) {
+      lastY.current = null;
+      return;
     }
 
     const hands = new Hands({
@@ -37,12 +36,18 @@ export default function HandController() {
 
       const hand = results.multiHandLandmarks[0];
 
-      const indexTip = hand[8];
-      const middleTip = hand[12];
+      const thumbTip = hand[4]; // polegar
+      const indexTip = hand[8]; // indicador
 
-      const isActive = indexTip.y < middleTip.y;
+      // 📏 Distância entre polegar e indicador
+      const dx = thumbTip.x - indexTip.x;
+      const dy = thumbTip.y - indexTip.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (!isActive) {
+      const pinchThreshold = 0.05;
+      const isPinching = distance < pinchThreshold;
+
+      if (!isPinching) {
         lastY.current = null;
         return;
       }
@@ -53,20 +58,14 @@ export default function HandController() {
         const diff = currentY - lastY.current;
 
         const deadZone = 0.02;
+
         if (Math.abs(diff) > deadZone) {
-          const speed = diff * 800;
+          const speed = diff * 1200;
 
-          position.current += speed;
-
-          position.current = Math.min(
-            0,
-            Math.max(-maxScroll.current, position.current)
-          );
-
-          if (scrollElement) {
-            scrollElement.style.transform =
-              `translateY(${position.current}px)`;
-          }
+          window.scrollBy({
+            top: speed,
+            behavior: "auto",
+          });
         }
       }
 
@@ -76,22 +75,42 @@ export default function HandController() {
     if (videoRef.current) {
       const camera = new Camera(videoRef.current, {
         onFrame: async () => {
-          await hands.send({ image: videoRef.current! });
+          if (videoRef.current) {
+            await hands.send({ image: videoRef.current });
+          }
         },
         width: 640,
         height: 480,
       });
 
       camera.start();
+      cameraRef.current = camera;
+      handsRef.current = hands;
     }
-  }, []);
+
+    return () => {
+      cameraRef.current?.stop();
+      handsRef.current?.close();
+    };
+  }, [active]);
 
   return (
-    <video
-      ref={videoRef}
-      className="fixed bottom-4 right-4 w-28 rounded-xl opacity-40 z-50"
-      autoPlay
-      playsInline
-    />
+    <>
+      <button
+        onClick={() => setActive(!active)}
+        className="fixed top-4 right-4 z-50 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 transition text-white shadow-lg"
+      >
+        {active ? "Desativar Câmera" : "Ativar Câmera"}
+      </button>
+
+      {active && (
+        <video
+          ref={videoRef}
+          className="fixed bottom-4 right-4 w-32 rounded-xl opacity-50 z-40"
+          autoPlay
+          playsInline
+        />
+      )}
+    </>
   );
 }

@@ -12,16 +12,11 @@ import foto_7 from "./assets/LoveImg_7.jpeg";
 
 export default function App() {
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-slate-950">
-      
+    <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-purple-950 to-indigo-950 px-6 py-12">
+
       <HandController />
 
-      <div
-        id="scroll-content"
-        className="absolute top-0 left-0 w-full flex flex-col items-center
-                   bg-gradient-to-b from-slate-950 via-purple-950 to-indigo-950
-                   px-6 py-12 gap-10 will-change-transform"
-      >
+      <div className="flex flex-col items-center gap-10">
         <DaysCounter />
 
         <ImageCard
@@ -35,9 +30,9 @@ export default function App() {
             foto_7,
           ]}
         />
-
-        <div className="h-[120vh]" />
       </div>
+
+      <div className="h-[120vh]" />
     </div>
   );
 }
