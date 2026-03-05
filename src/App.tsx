@@ -13,11 +13,14 @@ import foto_7 from "./assets/LoveImg_7.jpeg";
 export default function App() {
   return (
     <div className="relative h-screen w-full overflow-hidden bg-slate-950">
+      
       <HandController />
 
       <div
         id="scroll-content"
-        className="absolute top-0 left-0 w-full flex flex-col items-center bg-gradient-to-b from-slate-950 via-purple-950 to-indigo-950 px-6 py-12 gap-10"
+        className="absolute top-0 left-0 w-full flex flex-col items-center
+                   bg-gradient-to-b from-slate-950 via-purple-950 to-indigo-950
+                   px-6 py-12 gap-10 will-change-transform"
       >
         <DaysCounter />
 
@@ -33,7 +36,7 @@ export default function App() {
           ]}
         />
 
-        <div className="h-[100vh]" />
+        <div className="h-[120vh]" />
       </div>
     </div>
   );

@@ -4,12 +4,19 @@ import { Camera } from "@mediapipe/camera_utils";
 
 export default function HandController() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const lastY = useRef<number | null>(null);
   const position = useRef(0);
+  const maxScroll = useRef(0);
 
   useEffect(() => {
+    const scrollElement = document.getElementById("scroll-content");
+
+    if (scrollElement) {
+      maxScroll.current =
+        scrollElement.scrollHeight - window.innerHeight;
+    }
+
     const hands = new Hands({
       locateFile: (file) =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
@@ -23,26 +30,42 @@ export default function HandController() {
     });
 
     hands.onResults((results) => {
-      if (!results.multiHandLandmarks?.length) return;
+      if (!results.multiHandLandmarks?.length) {
+        lastY.current = null;
+        return;
+      }
 
       const hand = results.multiHandLandmarks[0];
-      const currentY = hand[8].y;
+
+      const indexTip = hand[8];
+      const middleTip = hand[12];
+
+      const isActive = indexTip.y < middleTip.y;
+
+      if (!isActive) {
+        lastY.current = null;
+        return;
+      }
+
+      const currentY = indexTip.y;
 
       if (lastY.current !== null) {
         const diff = currentY - lastY.current;
 
-        const deadZone = 0.015;
+        const deadZone = 0.02;
         if (Math.abs(diff) > deadZone) {
-          const speedLimit = 40;
-          const movement = Math.max(
-            -speedLimit,
-            Math.min(speedLimit, diff * 1000)
+          const speed = diff * 800;
+
+          position.current += speed;
+
+          position.current = Math.min(
+            0,
+            Math.max(-maxScroll.current, position.current)
           );
 
-          position.current += movement;
-
-          if (scrollRef.current) {
-            scrollRef.current.style.transform = `translateY(${position.current}px)`;
+          if (scrollElement) {
+            scrollElement.style.transform =
+              `translateY(${position.current}px)`;
           }
         }
       }
@@ -64,18 +87,11 @@ export default function HandController() {
   }, []);
 
   return (
-    <>
-      <video
-        ref={videoRef}
-        className="fixed bottom-4 right-4 w-28 rounded-xl opacity-40 z-50"
-        autoPlay
-        playsInline
-      />
-
-      <div
-        ref={scrollRef}
-        className="fixed inset-0 will-change-transform"
-      />
-    </>
+    <video
+      ref={videoRef}
+      className="fixed bottom-4 right-4 w-28 rounded-xl opacity-40 z-50"
+      autoPlay
+      playsInline
+    />
   );
 }
