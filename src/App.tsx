@@ -1,6 +1,7 @@
 import DaysCounter from "./components/DaysCounters";
 import ImageCard from "./components/ImageCards";
 import HandController from "./components/HandController";
+import TextContainer from "./components/TextContainer";
 
 import foto_1 from "./assets/LoveImg_1.jpeg";
 import foto_2 from "./assets/LoveImg_2.jpeg";
@@ -30,9 +31,10 @@ export default function App() {
             foto_7,
           ]}
         />
+
+        <TextContainer />
       </div>
 
-      <div className="h-[120vh]" />
     </div>
   );
 }
